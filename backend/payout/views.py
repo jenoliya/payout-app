@@ -2,48 +2,43 @@ from django.shortcuts import render
 from rest_framework.decorators import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from django.db.models import Sum
 
 # models
 from django.contrib.auth.models import User
 from .models import Merchant, Payout, Ledger
 
 # serializers
-from .serializers import PayoutRequestSerializer
-
-# Create your views here.
-# class MerchantView(APIView):
-#     serializer_class = MerchantSerializer
-#     def get(self, request):
-#         # select records from merchants model
-#         merchants = Merchant.objects.all()
-#         # serialize merchants
-#         serializer = self.serializer_class(merchants, many=True)
-#         output = {
-#             "message" : "Merchant list",
-#             "merchant_list": serializer.data
-#         }
-#         return Response(output, status=status.HTTP_200_OK)
+from .serializers import PayoutRequestSerializer, LedgerSerializer, PayoutSerilaizer
     
 class CreatePayoutRequestView(APIView):
     serializer_class = PayoutRequestSerializer  
     def post(self, request):
-        # print(request.data)
-        serializer = self.serializer_class(data=request.data)
+        # get idempotency key from header
+        idempotency_key = request.headers.get('Idempotency-key')
+        print("idempotency_key",request.headers.get('Idempotency-key'))
+        input = {
+            "idempotency_key": idempotency_key,
+            "amount_in_paise": request.data['amount_in_paise'],
+            "bank_account_id": request.data['bank_account_id']
+        }
+        if not input['idempotency_key']:
+            return Response({"message": "Idempotency key is required"}, status=status.HTTP_400_BAD_REQUEST)
+        print("input", input)
+        serializer = self.serializer_class(data=input)
         serializer.is_valid(raise_exception=True)
         # get logged in user info
         user = User.objects.filter(id=request.user.id).first()
-        print("user", user)
         merchant = Merchant.objects.filter(user=user.id).first()
-        print("merchant", merchant)
         if not merchant:
             return Response({"message": "Merchant account does not exist"}, status=status.HTTP_400_BAD_REQUEST)
         # check avalibale balance
         if serializer.validated_data['amount_in_paise'] > merchant.avaliable_balance_in_paise:
             return Response({"message": "Insufficient balance"}, status=status.HTTP_400_BAD_REQUEST)
         # check idempotency key
-        print("idempotency_key",serializer.validated_data['idempotency_key'])
         if Payout.objects.filter(idempotency_key=serializer.validated_data['idempotency_key']).exists():
-            return Response({"message": "Idempotency key already exists"}, status=status.HTTP_400_BAD_REQUEST)
+            # return theexisting record
+            payout = Payout.objects.filter(idempotency_key=serializer.validated_data['idempotency_key']).first()
         # create payout request
         payout = Payout.objects.create(
             merchant_id = merchant,
@@ -56,6 +51,8 @@ class CreatePayoutRequestView(APIView):
             "payout": payout.id
         }
         return Response(output, status=status.HTTP_201_CREATED)
+    
+
 class ProcessPayoutRequestView(APIView):
     def get(self, request, id):
         # get payout request
@@ -84,15 +81,110 @@ class ProcessPayoutRequestView(APIView):
         }
         return Response(output, status=status.HTTP_200_OK)
     
-# get incomplete payout requests
-class GetPayoutRequestView(APIView):
+# merchant payout history
+class GetMerchantPayoutHistoryView(APIView):
     def get(self, request):
-        # select records from payout model
-        payouts = Payout.objects.filter(status="pending")
-        # serialize payouts
-        serializer = self.serializer_class(payouts, many=True)
+
+        if not request.user.is_authenticated:
+            return Response(
+                {"message": "Unauthorized"},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        merchant = Merchant.objects.filter(user=request.user).first()
+
+        if not merchant:
+            return Response(
+                {"message": "Merchant not found"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # correct filtering
+        payouts = Payout.objects.filter(merchant_id=merchant.id)
+
+        # use serializer directly
+        serializer = PayoutSerilaizer(payouts, many=True)
+
         output = {
-            "message" : "Payout list",
+            "message": "Payout list",
             "payout_list": serializer.data
         }
+
+        return Response(output, status=status.HTTP_200_OK)
+    
+# merchant transaction history 
+class GetMerchantTransactionHistoryView(APIView):
+    def get(self, request):
+
+        if not request.user.is_authenticated:
+            return Response(
+                {"message": "Unauthorized"},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        merchant = Merchant.objects.filter(user=request.user).first()
+
+        if not merchant:
+            return Response(
+                {"message": "Merchant not found"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # correct filtering
+        ledgers = Ledger.objects.filter(merchant_id=merchant.id)
+
+        # use serializer directly
+        serializer = LedgerSerializer(ledgers, many=True)
+
+        output = {
+            "message": "Ledger list",
+            "ledger_list": serializer.data
+        }
+
+        return Response(output, status=status.HTTP_200_OK)
+    
+# get user dashboard
+class GetDashboardView(APIView):
+    def get(self, request):
+
+        if not request.user.is_authenticated:
+            return Response(
+                {"message": "Unauthorized"},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+        # get merchant
+        merchant = Merchant.objects.filter(user=request.user).first()
+
+        if not merchant:
+            return Response(
+                {"message": "Merchant account does not exist"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+         # HOLD = pending + processing payouts
+        hold_balance = Payout.objects.filter(
+            merchant_id=merchant.id,
+            status__in=["pending", "processing"]
+        ).aggregate(total=Sum("amount_in_paise"))["total"] or 0
+
+        # AVAILABLE = total ledger - hold
+        total_balance = Ledger.objects.filter(
+            merchant_id=merchant.id
+        ).aggregate(total=Sum("amount_in_paise"))["total"] or 0
+
+        # merchant transaction history
+        transaction_history = GetMerchantTransactionHistoryView().get(request).data
+        payout_history = GetMerchantPayoutHistoryView().get(request).data
+
+        output = {
+            "message": "Dashboard",
+            "available_balance": merchant.avaliable_balance_in_paise,
+            "hold_balance": hold_balance,
+            "name": merchant.name,
+            "email": merchant.user.email,
+            **transaction_history,
+            **payout_history
+        }
+
         return Response(output, status=status.HTTP_200_OK)

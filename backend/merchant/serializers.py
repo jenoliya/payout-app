@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from uuid import uuid4
-from django.contrib import auth
 
 # models
 from django.contrib.auth.models import User
@@ -36,19 +35,3 @@ class CreateMerchantSerializer(serializers.Serializer):
         )
 
         return merchant
-
-    
-
-    # def create(self, **kwargs):
-    #     email = self.validated_data['email']
-    #     password = self.validated_data['password']
-
-    #     user = User.objects.filter(email=email).first()
-    #     if not user:
-    #         raise serializers.ValidationError({"message": ["No active account found with the given credentials."]})
-
-    #     user = auth.authenticate(username=user.username, password=password)
-    #     if not user:
-    #         raise serializers.ValidationError({"message": ["No active account found with the given credentials."]})
-        
-    #     return user

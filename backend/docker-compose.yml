@@ -1,0 +1,28 @@
+version: "3.9"
+
+services:
+  backend:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: payout_app_backend
+    restart: unless-stopped
+    volumes:
+      - ./app:/app/app
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./.env
+    environment:
+      # FastAPI / app env
+      - PYTHONUNBUFFERED=1
+      - UVICORN_WORKERS=2      
+    extra_hosts:
+      # Maps host.docker.internal to host gateway (Docker 20.10+)
+      - "host.docker.internal:host-gateway"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge      
