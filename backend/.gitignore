@@ -136,5 +136,8 @@ dmypy.json
 # media
 /media
 
+# db
+db.sqlite3
+
 # poetry lock
 poetry.lock
