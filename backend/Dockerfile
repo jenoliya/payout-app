@@ -43,5 +43,5 @@ EXPOSE 8000
 # Environment variable for concurrency
 ENV UVICORN_WORKERS=2
 
-# Start FastAPI app
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers --workers ${UVICORN_WORKERS}"]
+# Start Django app
+CMD ["sh", "-c", "python manage.py migrate &&  python manage.py collectstatic --noinput && uvicorn core.wsgi:application --host 0.0.0.0 --port 8000 --proxy-headers --workers ${UVICORN_WORKERS}"]
