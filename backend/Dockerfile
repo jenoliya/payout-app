@@ -44,4 +44,4 @@ EXPOSE 8000
 ENV UVICORN_WORKERS=2
 
 # Start Django app
-CMD ["sh", "-c", "python manage.py migrate &&  python manage.py collectstatic --noinput && uvicorn core.wsgi:application --host 0.0.0.0 --port 8000 --proxy-headers --workers ${UVICORN_WORKERS}"]
+CMD ["sh", "-c", "python manage.py migrate && python manage.py collectstatic --noinput && gunicorn core.asgi:application -k uvicorn.workers.UvicornWorker -w 2 -b 0.0.0.0:8000"]
