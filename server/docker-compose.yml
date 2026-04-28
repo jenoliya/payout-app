@@ -1,0 +1,18 @@
+version: "3.8"
+
+services:
+  nginx:
+    build:
+      context: .
+      dockerfile: ./nginx/Dockerfile  
+    container_name: payout_app_nginx
+    ports:
+      - 80:80
+      - 443:443
+    restart: unless-stopped
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
