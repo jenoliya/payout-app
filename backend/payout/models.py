@@ -1,6 +1,7 @@
 from django.db import models
 from uuid import uuid4
 
+# models
 from django.contrib.auth.models import User
 
 # Create your models here.
@@ -39,6 +40,7 @@ class Payout(models.Model):
         ("failed", "failed"),
     ]
     merchant_id = models.ForeignKey(Merchant, on_delete = models.CASCADE, null = True)
+    bank_account_id = models.CharField(null=True, blank=True)
     amount_in_paise = models.IntegerField(default=0)
     status = models.CharField(max_length = 20, choices = STATUS_CHOICES)
     idempotency_key = models.CharField()

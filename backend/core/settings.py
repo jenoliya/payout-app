@@ -182,8 +182,12 @@ CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "DELETE"]
 CORS_ALLOW_HEADERS = ["authorization", "content-type"]
 
 CELERY_BEAT_SCHEDULE = {
-    "run-payout-processor-every-10-seconds": {
+    "run-payout-processor-every-60-seconds": {
         "task": "payout.tasks.process_payouts",
+        "schedule": 60.0,
+    },
+    "run-hold-processor-every-10-seconds": {
+        "task": "payout.tasks.pending_payouts",
         "schedule": 10.0,
     },
 }

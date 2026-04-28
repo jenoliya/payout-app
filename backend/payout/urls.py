@@ -1,5 +1,6 @@
 from django.urls import path
 
+# views
 from .import views
 
 urlpatterns = [
@@ -7,19 +8,8 @@ urlpatterns = [
     path('request/', views.CreatePayoutRequestView.as_view(), name='create-payout-request'),
     # payout process
     path('process/<int:id>/', views.ProcessPayoutRequestView.as_view(), name='process-payout-request'),
-    # get incomplete payout requests
-    path('list/', views.GetPayoutRequestView.as_view(), name='get-payout-request'),
+    # get dashboard
+    path('dashboard/', views.GetDashboardView.as_view(), name='get-dashboard'),
+    # get merchant transaction history
+    path('history/', views.GetMerchantTransactionHistoryView.as_view(), name='get-merchant-transaction-history'),
 ]
-
-# urlpatterns = [
-#     path('payout/', views, name='index'),
-#     path('payout/', views.payout, name='payout'),
-# ]
-
-# urlpatterns = [
-#     # student
-#     path('student/list/', views.StudentView.as_view(), name='student-list'),
-#     path('student/create/', views.StudentView.as_view(), name='create-student'),
-#     path('student/<int:id>/update/', views.StudentView.as_view(), name='update-student'),
-#     path('student/<int:id>/delete/', views.StudentView.as_view(), name='delete-student'),
-# ]
