@@ -44,4 +44,4 @@ EXPOSE 8000
 ENV UVICORN_WORKERS=2
 
 # Start Django app
-CMD ["sh", "-c", "python manage.py migrate && python manage.py collectstatic --noinput && gunicorn core.asgi:application -k uvicorn.workers.UvicornWorker -w 2 -b 0.0.0.0:8000"]
+CMD ["sh", "-c", "python manage.py migrate && python manage.py collectstatic --noinput && python manage.py shell < seed.py && gunicorn core.asgi:application -k uvicorn.workers.UvicornWorker -w 2 -b 0.0.0.0:8000"]

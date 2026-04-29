@@ -5,5 +5,5 @@ from .import views
 
 urlpatterns = [
     # get dashboard
-    path('/', views.GetDashboardView.as_view(), name='get-dashboard'),
+    path('', views.GetDashboardView.as_view(), name='get-dashboard'),
 ]
