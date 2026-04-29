@@ -21,7 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-^b5w+9#9z5bu6pxml6pdjez2mh*6rji7eib=$p#c)atx592ki0'
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-^b5w+9#9z5bu6pxml6pdjez2mh*6rji7eib=$p#c)atx592ki0')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     # custome apps
     'payout',
     'merchant',
+    'dashboard',
 ]
 
 MIDDLEWARE = [
@@ -166,9 +167,9 @@ OAUTH2_PROVIDER = {
     'ACCESS_TOKEN_EXPIRE_SECONDS': int("10800"),  # 3 hours in seconds
     'REFRESH_TOKEN_EXPIRE_SECONDS': int("3600"),
 }
-OAUTH2_CLIENT_ID = "OrttGsuGNMMERqOxhXB1iQHxPAHVVHDCznhNrCc4"
-OAUTH2_CLIENT_SECRET = "TpUgKuunxonp8ljSP6c6OczpQ38RyL2phm6pYYCiVtRc1GcKweN4oRoqHCrUtFy3m8gUFzTi9heYH7EWoDbHezuaQ6BlGBIeu79JeghTkwbSpV8KB9VatHCWTm6Dw8YU"
-JWT_ALGORITHM = "HS256"
+OAUTH2_CLIENT_ID = os.environ.get("OAUTH2_CLIENT_ID", "")
+OAUTH2_CLIENT_SECRET = os.environ.get("OAUTH2_CLIENT_SECRET", "")
+JWT_ALGORITHM = os.environ.get("JWT_ALGORITHM", "HS256")
 
 # Celery
 CELERY_ENABLED = os.environ.get("CELERY_ENABLED", False)
@@ -181,15 +182,15 @@ CORS_ALLOW_ALL_ORIGINS = True
 # CORS_ALLOWED_ORIGINS = ["http://127.0.0.1:5173", "http://0.0.0.0:5173", ]  # Use this in production
 # CORS_ALLOW_CREDENTIALS = True  # Allow cookies/auth headers
 CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "DELETE"]
-CORS_ALLOW_HEADERS = ["authorization", "content-type"]
+CORS_ALLOW_HEADERS = ["authorization", "content-type", "idempotency-key"]
 
 CELERY_BEAT_SCHEDULE = {
     "run-payout-processor-every-60-seconds": {
-        "task": "payout.tasks.process_payouts",
+        "task": "payout.tasks.process_pending_payouts",
         "schedule": 60.0,
     },
     "run-hold-processor-every-10-seconds": {
-        "task": "payout.tasks.pending_payouts",
+        "task": "payout.tasks.process_holdings_payouts",
         "schedule": 10.0,
     },
 }
