@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   backend:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile
     container_name: payout_app_backend
@@ -14,15 +14,64 @@ services:
     env_file:
       - ./.env
     environment:
-      # FastAPI / app env
       - PYTHONUNBUFFERED=1
-      - UVICORN_WORKERS=2      
+      - UVICORN_WORKERS=2
+      - CELERY_ENABLED=True
+      - CELERY_BROKER_URL=redis://redis:6379/0
     extra_hosts:
-      # Maps host.docker.internal to host gateway (Docker 20.10+)
       - "host.docker.internal:host-gateway"
+    depends_on:
+      - redis
+    networks:
+      - app-network
+
+  celery-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: payout_app_celery_worker
+    restart: unless-stopped
+    command: celery -A core worker --loglevel=info
+    env_file:
+      - ./.env
+    environment:
+      - PYTHONUNBUFFERED=1
+      - CELERY_ENABLED=True
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    depends_on:
+      - redis
+      - backend
+    networks:
+      - app-network
+
+  celery-beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: payout_app_celery_beat
+    restart: unless-stopped
+    command: celery -A core beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    env_file:
+      - ./.env
+    environment:
+      - PYTHONUNBUFFERED=1
+      - CELERY_ENABLED=True
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    depends_on:
+      - redis
+      - backend
+    networks:
+      - app-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: payout_app_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
     networks:
       - app-network
 
 networks:
   app-network:
-    driver: bridge      
+    driver: bridge

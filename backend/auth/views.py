@@ -59,3 +59,32 @@ class LoginView(APIView):
             return Response({"message": "OAuth application does not exist."}, status=status.HTTP_400_BAD_REQUEST)
         except AuthException as e:
             return Response({"message": e.message}, status=status.HTTP_400_BAD_REQUEST)
+
+class CreateOAuthAppView(APIView):
+    permission_classes = (AllowAny,)
+
+    def post(self, request):
+        client_id = settings.OAUTH2_CLIENT_ID
+        client_secret = settings.OAUTH2_CLIENT_SECRET
+
+        if not client_id or not client_secret:
+            return Response(
+                {"message": "OAUTH2_CLIENT_ID and OAUTH2_CLIENT_SECRET must be set in environment."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        if Application.objects.filter(client_id=client_id).exists():
+            return Response(
+                {"message": "OAuth application already exists."},
+                status=status.HTTP_200_OK,
+            )
+
+        Application.objects.create(
+            name="PayApp",
+            client_id=client_id,
+            client_secret=client_secret,
+            client_type=Application.CLIENT_CONFIDENTIAL,
+            authorization_grant_type=Application.GRANT_PASSWORD,
+        )
+
+        return Response({"message": "OAuth application created."}, status=status.HTTP_201_CREATED)
