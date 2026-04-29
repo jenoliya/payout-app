@@ -85,11 +85,14 @@ WSGI_APPLICATION = 'core.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.environ.get('DB_PATH', str(BASE_DIR / 'db.sqlite3')),
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ.get('DB_NAME', 'payout_db'),
+        'USER': os.environ.get('DB_USER', 'postgres'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'postgres'),
+        'HOST': os.environ.get('DB_HOST', 'localhost'),
+        'PORT': os.environ.get('DB_PORT', '5432'),
     }
 }
-
 
 
 # Password validation
@@ -183,7 +186,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 # CORS_ALLOWED_ORIGINS = ["http://127.0.0.1:5173", "http://0.0.0.0:5173", ]  # Use this in production
 # CORS_ALLOW_CREDENTIALS = True  # Allow cookies/auth headers
 CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "DELETE"]
-CORS_ALLOW_HEADERS = ["authorization", "content-type", "idempotency-key"]
+CORS_ALLOW_HEADERS = ["authorization", "content-type"]
 
 CELERY_BEAT_SCHEDULE = {
     "run-payout-processor-every-60-seconds": {
