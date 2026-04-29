@@ -4,11 +4,6 @@ FROM python:3.12-slim AS base
 ENV APP_HOME=/app
 WORKDIR ${APP_HOME}
 
-# Create non-root user with a real home directory
-RUN addgroup --system appgroup && \
-    adduser --system --ingroup appgroup --home /home/appuser --create-home appuser
-
-# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl build-essential gcc \
     && rm -rf /var/lib/apt/lists/*
@@ -31,10 +26,7 @@ RUN poetry install --no-root --no-interaction --no-ansi
 FROM deps AS runtime
 
 COPY . ${APP_HOME}
-RUN mkdir -p /app/db && chown -R appuser:appgroup ${APP_HOME} /app/db
-
-USER appuser
-ENV HOME=/home/appuser
+RUN mkdir -p /app/db
 
 EXPOSE 8000
 
