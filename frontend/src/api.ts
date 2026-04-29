@@ -1,6 +1,6 @@
 import type { LoginResponse, DashboardResponse, PayoutResponse, ApiError } from "./types";
 
-const API_BASE =  import.meta.env.VITE_API_BASE ?? "http://127.0.0.1:8000/api/v1";
+const API_BASE = import.meta.env.VITE_API_BASE ?? "http://127.0.0.1:8000/api/v1";
 
 type ApiResult<T> =
   | { ok: true; data: T }
@@ -13,6 +13,7 @@ async function request<T>(
   const { headers: extraHeaders, ...rest } = options;
   try {
     const res = await fetch(`${API_BASE}${path}`, {
+      credentials: "omit",
       headers: { "Content-Type": "application/json", ...extraHeaders },
       ...rest,
     });
