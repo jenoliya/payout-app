@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   backend:
     build:
@@ -25,11 +23,11 @@ services:
     depends_on:
       - redis
     healthcheck:
-      test: ["CMD", "python", "-c", "import django; django.setup(); from django.db import connection; connection.ensure_connection()"]
-      interval: 5s
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/auth/login/"]
+      interval: 10s
       timeout: 5s
       retries: 10
-      start_period: 10s
+      start_period: 30s
     networks:
       - app-network
 
