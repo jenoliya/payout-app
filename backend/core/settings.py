@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     # custome apps
     'payout',
     'merchant',
+    'dashboard',
 ]
 
 MIDDLEWARE = [
@@ -166,8 +167,8 @@ OAUTH2_PROVIDER = {
     'ACCESS_TOKEN_EXPIRE_SECONDS': int("10800"),  # 3 hours in seconds
     'REFRESH_TOKEN_EXPIRE_SECONDS': int("3600"),
 }
-OAUTH2_CLIENT_ID = "OrttGsuGNMMERqOxhXB1iQHxPAHVVHDCznhNrCc4"
-OAUTH2_CLIENT_SECRET = "TpUgKuunxonp8ljSP6c6OczpQ38RyL2phm6pYYCiVtRc1GcKweN4oRoqHCrUtFy3m8gUFzTi9heYH7EWoDbHezuaQ6BlGBIeu79JeghTkwbSpV8KB9VatHCWTm6Dw8YU"
+OAUTH2_CLIENT_ID = "mf82GXpuWIJ8ofg2dswRcivfztk0lbBCItFsfeCJ"
+OAUTH2_CLIENT_SECRET = "ITOCXBRqRqIlQzGJoP72CoHG5Y4xbJiAcG6QhNgAgDB8mtzUJ355Os9IWqVpxpCzMN6bCoqDk8kI5r7pi78HfXw9wJNkH3ERsN1oKZFVuzkDDc8n2YLWhjJqJzKgCq1Z"
 JWT_ALGORITHM = "HS256"
 
 # Celery
@@ -185,11 +186,11 @@ CORS_ALLOW_HEADERS = ["authorization", "content-type"]
 
 CELERY_BEAT_SCHEDULE = {
     "run-payout-processor-every-60-seconds": {
-        "task": "payout.tasks.process_payouts",
+        "task": "payout.tasks.process_pending_payouts",
         "schedule": 60.0,
     },
     "run-hold-processor-every-10-seconds": {
-        "task": "payout.tasks.pending_payouts",
+        "task": "payout.tasks.process_holdings_payouts",
         "schedule": 10.0,
     },
 }
